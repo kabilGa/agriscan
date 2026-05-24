@@ -1,827 +1,192 @@
+// Paste this entire block of code directly over your existing index.html content on GitHub
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgriScan — Plant Disease Detection</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:        #060a06;
-    --bg2:       #0c110c;
-    --bg3:       #111811;
-    --border:    rgba(74,222,128,0.12);
-    --border2:   rgba(74,222,128,0.25);
-    --green:     #4ade80;
-    --green-dim: #166534;
-    --green-glow:rgba(74,222,128,0.15);
-    --red:       #f87171;
-    --red-dim:   #7f1d1d;
-    --amber:     #fbbf24;
-    --text:      #e2f0e2;
-    --muted:     #4a6b4a;
-    --mono:      'DM Mono', monospace;
-    --sans:      'DM Sans', sans-serif;
-    --display:   'Syne', sans-serif;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(74,222,128,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(74,222,128,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Glow orb */
-  body::after {
-    content: '';
-    position: fixed;
-    top: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(74,222,128,0.06) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
-
-  /* ── HEADER ── */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 20px 0;
-  }
-  .header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 22px;
-    letter-spacing: -0.5px;
-    color: var(--green);
-  }
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--green-glow);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .logo span { color: var(--text); font-weight: 400; }
-
-  .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--border2);
-    background: var(--bg2);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    transition: all 0.4s;
-  }
-  .status-pill.live { border-color: var(--green); color: var(--green); background: var(--green-glow); }
-  .status-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.4s;
-  }
-  .status-pill.live .status-dot {
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  /* ── HERO ── */
-  .hero {
-    padding: 64px 0 48px;
-    border-bottom: 1px solid var(--border);
-  }
-  .hero-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 20px;
-    opacity: 0.8;
-  }
-  .hero h1 {
-    font-family: var(--display);
-    font-size: clamp(38px, 6vw, 72px);
-    font-weight: 800;
-    line-height: 1.0;
-    letter-spacing: -2px;
-    margin-bottom: 16px;
-  }
-  .hero h1 em {
-    font-style: normal;
-    color: var(--green);
-    position: relative;
-  }
-  .hero-sub {
-    font-size: 16px;
-    color: var(--muted);
-    max-width: 480px;
-    line-height: 1.7;
-    font-weight: 300;
-  }
-
-  /* ── CURRENT DETECTION (BIG CARD) ── */
-  .detection-section { padding: 48px 0 0; }
-
-  .section-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 24px;
-  }
-
-  .detection-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    transition: border-color 0.5s;
-  }
-  .detection-card.diseased { border-color: rgba(248,113,113,0.3); }
-  .detection-card.healthy  { border-color: rgba(74,222,128,0.3); }
-
-  .card-top {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-  }
-  @media(max-width:640px) { .card-top { grid-template-columns: 1fr; } }
-
-  .card-left {
-    padding: 36px;
-    border-right: 1px solid var(--border);
-  }
-  .card-right { padding: 36px; }
-
-  .detection-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    border: 1px solid transparent;
-  }
-  .detection-status.diseased { background: rgba(248,113,113,0.1); color: var(--red); border-color: rgba(248,113,113,0.3); }
-  .detection-status.healthy  { background: rgba(74,222,128,0.1);  color: var(--green); border-color: var(--border2); }
-  .detection-status.waiting  { background: var(--bg3); color: var(--muted); border-color: var(--border); }
-
-  .disease-name {
-    font-family: var(--display);
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    line-height: 1.2;
-    margin-bottom: 12px;
-    min-height: 68px;
-  }
-
-  .confidence-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .conf-bar-bg {
-    flex: 1;
-    height: 4px;
-    background: var(--bg3);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .conf-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--green);
-    width: 0%;
-    transition: width 0.8s cubic-bezier(0.4,0,0.2,1), background 0.5s;
-  }
-  .conf-bar-fill.diseased { background: var(--red); }
-  .conf-value {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--green);
-    min-width: 44px;
-    text-align: right;
-    transition: color 0.5s;
-  }
-  .conf-value.diseased { color: var(--red); }
-
-  .timestamp {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* Disease info side */
-  .info-block { margin-bottom: 20px; }
-  .info-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .info-text {
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--text);
-    font-weight: 300;
-  }
-
-  .danger-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 500;
-  }
-  .danger-low    { background: rgba(74,222,128,0.12);  color: var(--green); }
-  .danger-medium { background: rgba(251,191,36,0.12);  color: var(--amber); }
-  .danger-high   { background: rgba(248,113,113,0.12); color: var(--red);   }
-
-  .solution-box {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .solution-box .info-text { font-size: 13px; }
-
-  /* ── HISTORY ── */
-  .history-section { padding: 48px 0; }
-
-  .history-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
-    margin-top: 0;
-  }
-
-  .history-item {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    animation: fadeUp 0.4s ease both;
-    transition: border-color 0.3s;
-  }
-  .history-item:hover { border-color: var(--border2); }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-
-  .history-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .history-dot.healthy  { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .history-dot.diseased { background: var(--red);   box-shadow: 0 0 6px var(--red); }
-
-  .history-name {
-    font-size: 13px;
-    font-weight: 500;
-    flex: 1;
-  }
-  .history-conf {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .history-time {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  .empty-state {
-    grid-column: 1/-1;
-    text-align: center;
-    padding: 48px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 13px;
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-  }
-
-  /* ── STATS ROW ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 32px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 48px;
-  }
-  @media(max-width:640px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
-
-  .stat-box {
-    text-align: center;
-    padding: 20px 12px;
-  }
-  .stat-value {
-    font-family: var(--display);
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--green);
-    letter-spacing: -1px;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 24px 0;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  /* ── CONFIG MODAL ── */
-  #config-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  #config-btn:hover { border-color: var(--border2); color: var(--text); }
-
-  #config-panel {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  #config-panel.open { display: flex; }
-  .config-box {
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 16px;
-    padding: 32px;
-    width: 480px;
-    max-width: 90vw;
-  }
-  .config-box h3 {
-    font-family: var(--display);
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-  .config-box p {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-  .config-box label {
-    display: block;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .config-box input {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    outline: none;
-    margin-bottom: 16px;
-    transition: border-color 0.2s;
-  }
-  .config-box input:focus { border-color: var(--border2); }
-  .config-actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .btn-save {
-    background: var(--green);
-    color: #060a06;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-family: var(--display);
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .btn-save:hover { opacity: 0.85; }
-  .btn-cancel {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .no-data-overlay {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .no-data-overlay h2 {
-    font-family: var(--display);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 10px;
-  }
-  .no-data-overlay p {
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.6;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriScan — Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #22c55e;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 { margin: 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #ef4444;
+        }
+        .status-badge.connected { background: var(--accent); }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) { .grid { grid-template-columns: 1fr 2fr; } }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        h2 { margin-top: 0; font-size: 18px; color: var(--text-muted); border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .detection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .detection-item:last-child { border-bottom: none; }
+        .plant-tag { font-weight: bold; color: var(--accent); }
+        .disease-tag { background: #334155; padding: 4px 8px; border-radius: 6px; font-size: 14px; }
+        .conf-tag { font-family: monospace; color: var(--text-muted); }
+        .time-tag { font-size: 12px; color: var(--text-muted); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .empty { text-align: center; color: var(--text-muted); padding: 4px 0; }
+    </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap header-inner">
-    <div class="logo">
-      <div class="logo-icon">🌿</div>
-      Agri<span>Scan</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="status-pill" id="status-pill">
-        <div class="status-dot"></div>
-        <span id="status-text">Connecting…</span>
-      </div>
-      <button id="config-btn" onclick="document.getElementById('config-panel').classList.add('open')">⚙ Configure</button>
-    </div>
-  </div>
-</header>
+<div class="container">
+    <header>
+        <h1>🌿 AgriScan Live Dashboard</h1>
+        <div id="statusBadge" class="status-badge">Connecting...</div>
+    </header>
 
-<main class="wrap">
-
-  <section class="hero">
-    <div class="hero-label">Agricultural Robot — Real-time Analysis</div>
-    <h1>Plant Disease<br><em>Detection</em> System</h1>
-    <p class="hero-sub">Live detections from the robot's camera. Each scan is analyzed by a computer vision model trained on 54,000 plant images.</p>
-  </section>
-
-  <section class="detection-section">
-    <div class="section-label">// latest detection</div>
-
-    <div class="detection-card" id="detection-card">
-      <div class="card-top">
-        <div class="card-left">
-          <div class="detection-status waiting" id="det-status">
-            <span>●</span> <span>Awaiting scan</span>
-          </div>
-          <div class="disease-name" id="det-name">No detection yet</div>
-          <div class="confidence-row">
-            <div class="conf-bar-bg"><div class="conf-bar-fill" id="conf-bar"></div></div>
-            <div class="conf-value" id="conf-val">—%</div>
-          </div>
-          <div class="timestamp" id="det-time">Start the robot to begin scanning</div>
+    <div class="grid">
+        <div class="card">
+            <h2>System Summary</h2>
+            <p><strong>Database Link:</strong> Online</p>
+            <p><strong>Total Detections:</strong> <span id="totalCount" style="color: var(--accent); font-weight: bold;">0</span></p>
+            <p style="font-size: 14px; color: var(--text-muted);">This dashboard updates instantly when your Python robot captures a leaf disease.</p>
         </div>
-        <div class="card-right" id="card-right">
-          <div class="no-data-overlay">
-            <h2>Waiting for robot</h2>
-            <p>Run the Python app on your PC<br>and point the camera at a plant.</p>
-          </div>
+
+        <div class="card">
+            <h2>Real-time Stream Logs</h2>
+            <div id="logsContainer">
+                <div class="empty">Waiting for database events...</div>
+            </div>
         </div>
-      </div>
     </div>
-  </section>
-
-  <section style="padding:40px 0 0;">
-    <div class="stats-row">
-      <div class="stat-box">
-        <div class="stat-value" id="stat-total">0</div>
-        <div class="stat-label">Total scans</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-diseased" style="color:var(--red)">0</div>
-        <div class="stat-label">Diseased</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-healthy">0</div>
-        <div class="stat-label">Healthy</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-conf">—</div>
-        <div class="stat-label">Avg confidence</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="history-section">
-    <div class="section-label">// detection history</div>
-    <div class="history-grid" id="history-grid">
-      <div class="empty-state">No detections yet — start the robot to see results here.</div>
-    </div>
-  </section>
-
-</main>
-
-<footer class="wrap">
-  <span>AgriScan v1.0 — University Agricultural Robot Project</span>
-  <span id="footer-refresh">Refreshing every 3s</span>
-</footer>
-
-<!-- Config Modal -->
-<div id="config-panel">
-  <div class="config-box">
-    <h3>Supabase Configuration</h3>
-    <p>Enter your Supabase project URL and anon key. These are saved in your browser and never sent anywhere except Supabase.</p>
-    <label>Supabase URL</label>
-    <input type="text" id="cfg-url" placeholder="https://xxxx.supabase.co">
-    <label>Supabase Anon Key</label>
-    <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5c...">
-    <div class="config-actions">
-      <button class="btn-cancel" onclick="document.getElementById('config-panel').classList.remove('open')">Cancel</button>
-      <button class="btn-save" onclick="saveConfig()">Save & Connect</button>
-    </div>
-  </div>
 </div>
 
 <script>
-const DISEASE_INFO = {
-  "Tomato — Early Blight": {
-    description: "Fungal disease caused by Alternaria solani. Brown spots with concentric rings appear on older leaves first.",
-    danger: "medium", danger_label: "Moderate threat",
-    solution: "Remove infected leaves. Apply copper-based fungicide. Ensure good air circulation and avoid overhead watering."
-  },
-  "Tomato — Late Blight": {
-    description: "Caused by Phytophthora infestans — the same pathogen behind the Irish Famine. Spreads rapidly in cool, wet conditions.",
-    danger: "high", danger_label: "High threat — spreads fast",
-    solution: "Immediately remove and destroy infected plants. Apply mancozeb fungicide. Do not compost infected material."
-  },
-  "Tomato — Bacterial Spot": {
-    description: "Bacterial infection causing small, water-soaked spots that turn dark brown with yellow halos.",
-    danger: "medium", danger_label: "Moderate threat",
-    solution: "Apply copper bactericide early. Avoid working with plants when wet. Use disease-free seeds."
-  },
-  "Tomato — Healthy": {
-    description: "Plant appears healthy with no visible signs of disease or pest damage.",
-    danger: "low", danger_label: "No threat detected",
-    solution: "Continue regular care. Monitor weekly for early signs of disease."
-  },
-  "Potato — Early Blight": {
-    description: "Caused by Alternaria solani. Dark brown lesions with a target-like pattern on older leaves.",
-    danger: "medium", danger_label: "Moderate threat",
-    solution: "Apply protectant fungicide. Remove crop debris after harvest. Rotate crops annually."
-  },
-  "Potato — Late Blight": {
-    description: "Destructive disease caused by Phytophthora infestans. Can destroy an entire crop within days in wet weather.",
-    danger: "high", danger_label: "Critical — act immediately",
-    solution: "Destroy infected plants immediately. Apply systemic fungicide to healthy plants. Avoid irrigation during outbreak."
-  },
-  "Potato — Healthy": {
-    description: "Plant shows no signs of disease. Leaves are uniformly green with no lesions or discoloration.",
-    danger: "low", danger_label: "No threat detected",
-    solution: "Maintain regular watering schedule and monitor for pest activity."
-  },
-  "Apple — Apple Scab": {
-    description: "Caused by Venturia inaequalis. Olive-green to brown velvety spots on leaves and fruit, reducing yield and quality.",
-    danger: "medium", danger_label: "Moderate threat",
-    solution: "Apply fungicide at bud break. Rake and destroy fallen leaves. Choose scab-resistant varieties for future planting."
-  },
-  "Apple — Black Rot": {
-    description: "Fungal disease causing frog-eye leaf spots, cankers on branches, and fruit rot. Overwinters in dead wood.",
-    danger: "high", danger_label: "High threat",
-    solution: "Prune out infected branches. Remove mummified fruit. Apply captan or thiophanate-methyl fungicide."
-  },
-  "Apple — Healthy": {
-    description: "Tree and leaves appear healthy with vibrant green color and no lesions or abnormal growths.",
-    danger: "low", danger_label: "No threat detected",
-    solution: "Continue standard orchard management and regular monitoring."
-  },
-  "Peach — Bacterial Spot": {
-    description: "Caused by Xanthomonas arboricola. Small, water-soaked lesions on leaves that turn brown with a yellow halo.",
-    danger: "medium", danger_label: "Moderate threat",
-    solution: "Apply copper spray during dormant season. Avoid overhead irrigation. Remove heavily infected shoots."
-  },
-  "Orange — Citrus Greening": {
-    description: "Also called Huanglongbing (HLB). One of the most destructive citrus diseases worldwide, spread by the Asian citrus psyllid. No cure exists.",
-    danger: "high", danger_label: "Critical — no cure",
-    solution: "Remove and destroy infected trees immediately to prevent spread. Control psyllid population with insecticide. Plant certified disease-free stock."
-  },
-};
+    // Hardcoded credentials to bypass browser localStorage & configuration errors completely
+    const SUPABASE_URL = "https://clnbbzlerezoemkiwuncf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsbmJiemxlcmV6b21raXd1bmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MjA0MDMsImV4cCI6MjA5NTE5NjQwM30.-HA8Zc4Io1pls9b5UZRZBhcBnAEfGUstladOuYVC7yw";
 
-function getInfo(name) {
-  if (DISEASE_INFO[name]) return DISEASE_INFO[name];
-  const isHealthy = name.includes("Healthy");
-  return {
-    description: isHealthy
-      ? "Plant appears healthy with no visible signs of disease."
-      : "Disease detected. Consult an agricultural specialist for treatment options.",
-    danger: isHealthy ? "low" : "medium",
-    danger_label: isHealthy ? "No threat detected" : "Requires attention",
-    solution: isHealthy
-      ? "Continue regular monitoring and care."
-      : "Isolate affected plant and consult local agricultural extension services."
-  };
-}
+    // Initialize Supabase Client
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let supabaseUrl = localStorage.getItem("sb_url") || "";
-let supabaseKey = localStorage.getItem("sb_key") || "";
-let history = [];
-let lastId = null;
+    const statusBadge = document.getElementById('statusBadge');
+    const logsContainer = document.getElementById('logsContainer');
+    const totalCountEl = document.getElementById('totalCount');
+    let totalDetections = 0;
 
-function saveConfig() {
-  supabaseUrl = document.getElementById("cfg-url").value.trim();
-  supabaseKey = document.getElementById("cfg-key").value.trim();
-  localStorage.setItem("sb_url", supabaseUrl);
-  localStorage.setItem("sb_key", supabaseKey);
-  document.getElementById("config-panel").classList.remove("open");
-  fetchLatest();
-}
+    // Test data fetch and setup real-time streaming
+    async function initAgriScan() {
+        try {
+            // 1. Initial Data Fetch
+            const { data, error } = await supabaseClient
+                .from('detections')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
 
-function loadConfig() {
-  document.getElementById("cfg-url").value = supabaseUrl;
-  document.getElementById("cfg-key").value = supabaseKey;
-}
+            if (error) throw error;
 
-async function fetchLatest() {
-  if (!supabaseUrl || !supabaseKey) {
-    setStatus(false);
-    document.getElementById("status-text").textContent = "Not configured";
-    return;
-  }
+            // Mark dashboard as green / active
+            statusBadge.innerText = "🟢 Connected Live";
+            statusBadge.className = "status-badge connected";
 
-  try {
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/detections?select=*&order=created_at.desc&limit=20`,
-      { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
-    );
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const rows = await res.json();
-    setStatus(true);
-    if (rows.length > 0) updateUI(rows);
-  } catch (e) {
-    setStatus(false);
-    document.getElementById("status-text").textContent = "Connection error";
-  }
-}
+            if (data && data.length > 0) {
+                logsContainer.innerHTML = '';
+                totalDetections = data.length;
+                totalCountEl.innerText = totalDetections;
+                data.forEach(item => renderDetection(item, false));
+            }
 
-function setStatus(live) {
-  const pill = document.getElementById("status-pill");
-  const txt  = document.getElementById("status-text");
-  pill.className = "status-pill" + (live ? " live" : "");
-  if (live) txt.textContent = "Live";
-}
+            // 2. Open Live Stream Pipe (Realtime)
+            supabaseClient
+                .channel('schema-db-changes')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'detections' },
+                    (payload) => {
+                        totalDetections++;
+                        totalCountEl.innerText = totalDetections;
+                        renderDetection(payload.new, true);
+                    }
+                )
+                .subscribe();
 
-function updateUI(rows) {
-  const latest = rows[0];
-  const isHealthy = latest.disease_name.includes("Healthy");
-  const info = getInfo(latest.disease_name);
+        } catch (err) {
+            console.error("Connection Error details:", err);
+            statusBadge.innerText = "🔴 Connection Error";
+            statusBadge.className = "status-badge";
+            logsContainer.innerHTML = `<div class='empty' style='color: #ef4444;'>Failed to communicate with Supabase. Check table permissions.</div>`;
+        }
+    }
 
-  // Card state
-  const card = document.getElementById("detection-card");
-  card.className = "detection-card " + (isHealthy ? "healthy" : "diseased");
+    function renderDetection(item, isNew) {
+        // Clear empty state message if it exists
+        if(logsContainer.querySelector('.empty')) {
+            logsContainer.innerHTML = '';
+        }
 
-  // Status pill
-  const st = document.getElementById("det-status");
-  st.className = "detection-status " + (isHealthy ? "healthy" : "diseased");
-  st.innerHTML = `<span>●</span> <span>${isHealthy ? "Healthy plant" : "Disease detected"}</span>`;
+        const date = new Date(item.created_at).toLocaleTimeString();
+        const confidencePct = (item.confidence * 100).toFixed(1) + '%';
+        
+        const html = `
+            <div class="detection-item">
+                <div>
+                    <span class="plant-tag">[${item.plant || 'Unknown'}]</span>
+                    <span class="disease-tag">${item.disease_name}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="conf-tag">${confidencePct} match</div>
+                    <div class="time-tag">${date}</div>
+                </div>
+            </div>
+        `;
 
-  // Name
-  document.getElementById("det-name").textContent = latest.disease_name;
+        if (isNew) {
+            logsContainer.insertAdjacentHTML('afterbegin', html);
+        } else {
+            logsContainer.insertAdjacentHTML('beforeend', html);
+        }
+    }
 
-  // Confidence bar
-  const conf = Math.round(latest.confidence);
-  const bar  = document.getElementById("conf-bar");
-  const val  = document.getElementById("conf-val");
-  bar.style.width = conf + "%";
-  bar.className = "conf-bar-fill " + (isHealthy ? "" : "diseased");
-  val.textContent = conf + "%";
-  val.className = "conf-value " + (isHealthy ? "" : "diseased");
-
-  // Time
-  const d = new Date(latest.created_at);
-  document.getElementById("det-time").textContent =
-    "Detected at " + d.toLocaleTimeString();
-
-  // Info panel
-  const dangerClass = { low: "danger-low", medium: "danger-medium", high: "danger-high" }[info.danger];
-  document.getElementById("card-right").innerHTML = `
-    <div class="info-block">
-      <div class="info-label">Description</div>
-      <div class="info-text">${info.description}</div>
-    </div>
-    <div class="info-block">
-      <div class="info-label">Threat level</div>
-      <span class="danger-badge ${dangerClass}">${info.danger_label}</span>
-    </div>
-    <div class="info-block">
-      <div class="info-label">Recommended action</div>
-      <div class="solution-box"><div class="info-text">${info.solution}</div></div>
-    </div>
-  `;
-
-  // Stats
-  const total    = rows.length;
-  const diseased = rows.filter(r => !r.disease_name.includes("Healthy")).length;
-  const healthy  = rows.filter(r =>  r.disease_name.includes("Healthy")).length;
-  const avgConf  = Math.round(rows.reduce((a,r) => a + r.confidence, 0) / total);
-  document.getElementById("stat-total").textContent    = total;
-  document.getElementById("stat-diseased").textContent = diseased;
-  document.getElementById("stat-healthy").textContent  = healthy;
-  document.getElementById("stat-conf").textContent     = avgConf + "%";
-
-  // History
-  const grid = document.getElementById("history-grid");
-  grid.innerHTML = "";
-  rows.forEach((r, i) => {
-    const h = r.disease_name.includes("Healthy");
-    const t = new Date(r.created_at).toLocaleTimeString();
-    const el = document.createElement("div");
-    el.className = "history-item";
-    el.style.animationDelay = (i * 40) + "ms";
-    el.innerHTML = `
-      <div class="history-dot ${h ? 'healthy' : 'diseased'}"></div>
-      <div class="history-name">${r.disease_name}</div>
-      <div class="history-conf">${Math.round(r.confidence)}%</div>
-      <div class="history-time">${t}</div>
-    `;
-    grid.appendChild(el);
-  });
-}
-
-// Poll every 3 seconds
-loadConfig();
-fetchLatest();
-setInterval(fetchLatest, 3000);
+    // Fire everything up on page load
+    initAgriScan();
 </script>
 </body>
 </html>
